@@ -1,0 +1,39 @@
+services:
+  db:
+    container_name: database
+    image: postgres:16
+    environment:
+      POSTGRES_USER: abin_saa
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: piscineds
+    ports:
+      - "5433:5432"
+    volumes:
+      - local_data:/var/lib/postgresql/data
+      - ./customer:/customer
+    networks:
+      - net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U abin_saa -d piscineds"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  data_import:
+    image: postgres:16
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./customer:/customer
+    networks:
+      - net
+    command: ["/bin/bash", "/customer/automatic_table.sh"]
+    restart: "no"
+
+volumes:
+  local_data:
+
+networks:
+  net:
+    driver: bridge

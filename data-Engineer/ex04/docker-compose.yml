@@ -1,0 +1,39 @@
+services:
+  db:
+    container_name: ex04_db
+    image: postgres:16
+    environment:
+      POSTGRES_USER: abin_saa
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: piscineds
+    ports:
+      - "5434:5432"
+    volumes:
+      - ex04_data:/var/lib/postgresql/data
+      - ./items:/items
+    networks:
+      - net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U abin_saa -d piscineds"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  data_import:
+    image: postgres:16
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./items:/items
+    networks:
+      - net
+    command: ["/bin/bash", "/items/items_table.sh"]
+    restart: "no"
+
+volumes:
+  ex04_data:
+
+networks:
+  net:
+    driver: bridge
